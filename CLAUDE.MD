@@ -2,37 +2,61 @@
 
 ## Project Overview
 
-APKM-Repackager is a tool for repackaging Android APK files. This project enables modification, analysis, and repackaging of Android application packages.
+APKM-Repackager is a tool for converting APKM files (Android App Bundle split APKs) into single APK files that can be installed on Android-based TVs (like Xiaomi TVs).
 
 ## Project Purpose
 
-This tool is designed for:
-- Legitimate APK modification and customization
-- Security research and analysis
-- Authorized penetration testing
-- Educational purposes
-- CTF challenges
-- Development and testing workflows
+This tool solves a specific compatibility issue:
+- **Problem**: APKM files contain multiple APK slices (different architectures, screen densities, languages, etc.)
+- **Challenge**: Many Android TVs don't support installing APKM files or split APK packages directly
+- **Solution**: Extract only the necessary slices for the target device and repackage them into a single installable APK
 
-**Important**: This tool should only be used with proper authorization and for legitimate purposes.
+### Use Case
+Users with Android TVs (like Xiaomi) who want to install apps distributed as APKM files can use this tool to:
+1. Extract the APKM file
+2. Identify and select the required slices (correct architecture, density, etc.)
+3. Merge them into a single APK
+4. Install the resulting APK on their TV
 
 ## Project Structure
 
 ```
 APKM-Repackager/
-├── README.md           # Project documentation
-├── CLAUDE.MD          # This file - Claude development guide
-└── .git/              # Git repository
+├── README.md              # Project documentation
+├── CLAUDE.MD             # This file - Claude development guide
+├── requirements.txt      # Python dependencies
+├── apkm_repackager.py   # Main script (planned)
+├── lib/                 # Helper modules (planned)
+│   ├── apkm_parser.py   # APKM extraction and parsing
+│   ├── apk_merger.py    # APK merging logic
+│   └── signer.py        # APK signing utilities
+└── .git/                # Git repository
 ```
+
+## How It Works
+
+The tool follows this workflow:
+
+1. **Extract APKM**: Unzip the APKM file to access individual APK slices
+2. **Parse Manifests**: Read AndroidManifest.xml from each slice to understand their purpose
+3. **Identify Slices**: Categorize slices by type (base, architecture, density, language, etc.)
+4. **Select Required Slices**: Based on target device specs or user input, select necessary slices
+5. **Merge APKs**: Combine selected slices into a single APK structure
+6. **Sign APK**: Sign the merged APK to make it installable
+7. **Output**: Produce a single APK file ready for installation on Android TV
 
 ## Technology Stack
 
-To be determined based on project development. Likely technologies:
-- Python for scripting and automation
-- Java/Kotlin for Android-specific operations
-- Bash scripts for system operations
-- APKTool or similar for APK decompilation/recompilation
-- Android SDK tools
+Technologies for APKM processing:
+- **Python** - Main scripting language for automation and logic
+- **ZIP/Unzip utilities** - APKM files are essentially ZIP archives
+- **APK Parser libraries** - To read AndroidManifest.xml and analyze APK contents
+- **APK signing tools** - For signing the merged APK (apksigner from Android SDK)
+- **Android SDK Build Tools** - For various APK operations
+- Possible libraries:
+  - `zipfile` (Python built-in) for APKM extraction
+  - `androguard` or similar for APK analysis
+  - `apksigner` for signing
 
 ## Development Guidelines
 
@@ -50,28 +74,41 @@ To be determined based on project development. Likely technologies:
 - Log operations for audit trails
 
 ### Testing
-- Test with various APK types and sizes
-- Verify repackaged APKs function correctly
-- Test error handling and edge cases
+- Test with various APKM files from different sources
+- Verify merged APKs install correctly on Android TVs
+- Test with different architecture combinations
+- Validate APK signatures after merging
+- Test error handling for corrupted APKM files
+- Ensure all necessary slices are included in merged APK
 - Document test cases and results
 
 ## Key Features (Planned)
 
-- [ ] APK decompilation
-- [ ] Resource modification
-- [ ] Code modification support
-- [ ] APK recompilation
-- [ ] Signing repackaged APKs
+- [ ] APKM file extraction (unzip/decompress)
+- [ ] Parse and analyze APK slices within APKM
+- [ ] Detect device architecture and requirements
+- [ ] Select appropriate slices (architecture, density, language)
+- [ ] Merge selected APK slices into single APK
+- [ ] Sign the merged APK for installation
+- [ ] Validate merged APK integrity
+- [ ] Support for multiple architectures (arm, arm64, x86, x86_64)
+- [ ] Support for different screen densities (hdpi, xhdpi, xxhdpi, etc.)
+- [ ] CLI interface for easy usage
 - [ ] Batch processing support
-- [ ] Configuration management
 
 ## Dependencies
 
-Document dependencies as they are added:
-- APKTool or similar decompilation tools
-- Java/Android SDK
-- Python packages (if applicable)
-- System utilities
+Required dependencies:
+- **Python 3.7+** - Main runtime environment
+- **Android SDK Build Tools** - For apksigner and other tools
+- **Java/JDK** - Required by Android SDK tools
+
+Python packages (to be added to requirements.txt):
+- `androguard` or `pyaxmlparser` - For parsing AndroidManifest.xml from APK files
+- Standard library modules: `zipfile`, `argparse`, `pathlib`, `json`
+
+Optional:
+- `apktool` - For deeper APK analysis if needed
 
 ## Usage Patterns
 
@@ -86,19 +123,43 @@ When working on this project:
 
 ### Command Patterns
 
-Document common command patterns here as the project develops:
+Expected usage patterns:
 ```bash
-# Example patterns (to be updated)
-# ./repackage.py input.apk output.apk
-# ./analyze.py input.apk
+# Basic usage - convert APKM to APK
+python apkm_repackager.py input.apkm -o output.apk
+
+# Specify target architecture
+python apkm_repackager.py input.apkm -o output.apk --arch arm64-v8a
+
+# Specify screen density
+python apkm_repackager.py input.apkm -o output.apk --density xhdpi
+
+# List available slices in APKM
+python apkm_repackager.py input.apkm --list
+
+# Auto-detect from device (future feature)
+python apkm_repackager.py input.apkm -o output.apk --auto-detect
 ```
 
 ## Important Notes
 
-- This is a security-sensitive tool - always prioritize safe operations
-- Maintain clear documentation of capabilities and limitations
-- Keep track of Android version compatibility
-- Document any third-party tool dependencies
+### APKM File Structure
+- APKM files are ZIP archives containing multiple APK files
+- Typically includes: base APK + split APKs (architecture, density, language, etc.)
+- Each slice has a specific naming convention indicating its purpose
+- AndroidManifest.xml in each APK contains configuration details
+
+### Android TV Compatibility
+- Most Android TVs use ARM architecture (arm64-v8a or armeabi-v7a)
+- Common TV screen densities: hdpi, xhdpi, or tvdpi
+- TVs typically don't need all language packs
+- The merged APK must maintain proper manifest merging
+
+### Key Challenges
+- Correctly identifying which slices are mandatory vs optional
+- Properly merging manifests from multiple APKs
+- Maintaining valid APK signature after merging
+- Handling different APKM formats from various sources
 
 ## Git Workflow
 
@@ -117,9 +178,12 @@ Document common command patterns here as the project develops:
 
 ## Resources
 
-- [Android Developer Documentation](https://developer.android.com/)
-- [APKTool Documentation](https://ibotpeaches.github.io/Apktool/)
-- [Android Security Guidelines](https://source.android.com/security)
+- [Android App Bundles Documentation](https://developer.android.com/guide/app-bundle)
+- [Split APKs Overview](https://developer.android.com/guide/app-bundle/configure-base)
+- [APK Splits and Configuration](https://developer.android.com/studio/build/configure-apk-splits)
+- [Android SDK Build Tools](https://developer.android.com/studio/releases/build-tools)
+- [apksigner Documentation](https://developer.android.com/studio/command-line/apksigner)
+- [Androguard - Python APK Analysis](https://github.com/androguard/androguard)
 
 ---
 
