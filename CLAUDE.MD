@@ -29,7 +29,11 @@ APKM-Repackager/
 ├── lib/                 # Helper modules (planned)
 │   ├── apkm_parser.py   # APKM extraction and parsing
 │   ├── apk_merger.py    # APK merging logic
-│   └── signer.py        # APK signing utilities
+│   ├── signer.py        # APK signing utilities
+│   └── config_manager.py # Configuration management
+├── configs/             # Device configuration profiles
+│   ├── default.json     # Default configuration
+│   └── xiaomi-tv.json   # Example: Xiaomi TV profile
 └── .git/                # Git repository
 ```
 
@@ -44,6 +48,43 @@ The tool follows this workflow:
 5. **Merge APKs**: Combine selected slices into a single APK structure
 6. **Sign APK**: Sign the merged APK to make it installable
 7. **Output**: Produce a single APK file ready for installation on Android TV
+
+## Configuration System
+
+The tool supports saving multiple device configurations (profiles) to avoid specifying parameters repeatedly. This is especially useful for users with multiple TVs or for sharing configurations.
+
+### Configuration Profile Structure
+
+Each configuration profile contains:
+- **Device Name**: Identifier for the TV/device (e.g., "Xiaomi Mi TV 4S")
+- **Architecture**: Target CPU architecture (e.g., `arm64-v8a`, `armeabi-v7a`)
+- **Max Screen Density**: Maximum screen density supported by the device
+  - The tool will select the highest available density **up to and including** this value
+  - Common values: `ldpi`, `mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`, `tvdpi`
+  - Example: If max is `xhdpi`, tool won't include `xxhdpi` or `xxxhdpi` slices
+- **Language Preferences**: Ordered list of preferred languages (e.g., `["zh-CN", "en"]`)
+  - Languages are prioritized in order
+  - If first preference (e.g., Simplified Chinese) is available, it will be included
+  - Falls back to next preference if first isn't available
+
+### Example Configuration (JSON format)
+
+```json
+{
+  "name": "Xiaomi Mi TV 4S",
+  "architecture": "arm64-v8a",
+  "max_density": "xhdpi",
+  "languages": ["zh-CN", "en"],
+  "description": "Xiaomi Android TV with ARM64 processor"
+}
+```
+
+### Configuration Usage Benefits
+
+1. **Convenience**: Save settings once, reuse for all APKM conversions
+2. **Consistency**: Ensure all APKs are optimized the same way for a device
+3. **Sharing**: Share configurations with others who have the same TV model
+4. **Multiple Devices**: Maintain different profiles for different TVs in your household
 
 ## Technology Stack
 
@@ -84,16 +125,38 @@ Technologies for APKM processing:
 
 ## Key Features (Planned)
 
+### Core Functionality
 - [ ] APKM file extraction (unzip/decompress)
 - [ ] Parse and analyze APK slices within APKM
-- [ ] Detect device architecture and requirements
-- [ ] Select appropriate slices (architecture, density, language)
+- [ ] Identify and categorize slices (base, arch, density, language)
+- [ ] Select appropriate slices based on configuration
 - [ ] Merge selected APK slices into single APK
 - [ ] Sign the merged APK for installation
 - [ ] Validate merged APK integrity
-- [ ] Support for multiple architectures (arm, arm64, x86, x86_64)
-- [ ] Support for different screen densities (hdpi, xhdpi, xxhdpi, etc.)
+
+### Configuration Management
+- [ ] Save and load device configuration profiles (JSON format)
+- [ ] Support multiple configurations for different devices
+- [ ] Create, edit, list, and delete configuration profiles
+- [ ] Set default configuration
+- [ ] Configuration validation
+
+### Architecture & Density Support
+- [ ] Support for multiple architectures (armeabi-v7a, arm64-v8a, x86, x86_64)
+- [ ] Support for screen densities (ldpi, mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi, tvdpi)
+- [ ] Intelligent density selection (max density threshold)
+- [ ] Fallback to lower density if exact match not available
+
+### Language Support
+- [ ] Multi-language preference ordering
+- [ ] Prioritized language selection (e.g., zh-CN preferred, fallback to en)
+- [ ] Include only preferred languages to reduce APK size
+
+### Interface & Usability
 - [ ] CLI interface for easy usage
+- [ ] List available slices in APKM
+- [ ] Dry-run mode to preview selected slices
+- [ ] Verbose output for debugging
 - [ ] Batch processing support
 
 ## Dependencies
@@ -105,9 +168,10 @@ Required dependencies:
 
 Python packages (to be added to requirements.txt):
 - `androguard` or `pyaxmlparser` - For parsing AndroidManifest.xml from APK files
-- Standard library modules: `zipfile`, `argparse`, `pathlib`, `json`
+- Standard library modules: `zipfile`, `argparse`, `pathlib`, `json`, `shutil`
 
 Optional:
+- `pyyaml` - If YAML configuration format is preferred over JSON
 - `apktool` - For deeper APK analysis if needed
 
 ## Usage Patterns
@@ -115,30 +179,43 @@ Optional:
 ### For Claude
 
 When working on this project:
-1. Always validate that operations are for authorized purposes
+1. Validate configuration files for correct format and valid values
 2. Check file paths and permissions before operations
-3. Test changes with sample APK files
-4. Document any new features or modifications
-5. Update this CLAUDE.MD file as the project evolves
+3. Test with various APKM files and different configurations
+4. Ensure density hierarchy is correctly implemented
+5. Verify language preference ordering works as expected
+6. Test edge cases (missing slices, unavailable languages, etc.)
+7. Document any new features or modifications
+8. Update this CLAUDE.MD file as the project evolves
 
 ### Command Patterns
 
 Expected usage patterns:
 ```bash
-# Basic usage - convert APKM to APK
+# Using saved configuration (recommended)
+python apkm_repackager.py input.apkm -o output.apk --config xiaomi-tv
+
+# Using default configuration
 python apkm_repackager.py input.apkm -o output.apk
 
-# Specify target architecture
-python apkm_repackager.py input.apkm -o output.apk --arch arm64-v8a
-
-# Specify screen density
-python apkm_repackager.py input.apkm -o output.apk --density xhdpi
+# Manual parameters (without configuration)
+python apkm_repackager.py input.apkm -o output.apk --arch arm64-v8a --max-density xhdpi --languages zh-CN,en
 
 # List available slices in APKM
 python apkm_repackager.py input.apkm --list
 
-# Auto-detect from device (future feature)
-python apkm_repackager.py input.apkm -o output.apk --auto-detect
+# Dry run to preview selected slices (before actual conversion)
+python apkm_repackager.py input.apkm --config xiaomi-tv --dry-run
+
+# Configuration management commands
+python apkm_repackager.py --create-config xiaomi-tv
+python apkm_repackager.py --list-configs
+python apkm_repackager.py --show-config xiaomi-tv
+python apkm_repackager.py --delete-config xiaomi-tv
+python apkm_repackager.py --set-default xiaomi-tv
+
+# Batch processing with same configuration
+python apkm_repackager.py *.apkm --config xiaomi-tv --batch
 ```
 
 ## Important Notes
@@ -155,11 +232,105 @@ python apkm_repackager.py input.apkm -o output.apk --auto-detect
 - TVs typically don't need all language packs
 - The merged APK must maintain proper manifest merging
 
+### Screen Density Selection
+- **Max Density Threshold**: When `max_density` is set (e.g., `xhdpi`), the tool includes the highest available density up to that limit
+- **Example**: If max is `xhdpi` and APKM contains `mdpi`, `hdpi`, `xhdpi`, `xxhdpi`:
+  - Tool will select `xhdpi` (highest available ≤ max)
+  - Will NOT include `xxhdpi` slices (exceeds max)
+- **Rationale**: Including higher density resources wastes space and may cause compatibility issues on lower-spec TVs
+- **Density hierarchy**: `ldpi` < `mdpi` < `hdpi` < `tvdpi` < `xhdpi` < `xxhdpi` < `xxxhdpi`
+
+### Language Preferences
+- **Priority Order**: Languages are specified in preference order (e.g., `["zh-CN", "en"]`)
+- **First Available Wins**: Tool includes the first available language from the preference list
+- **Fallback**: If primary language (zh-CN) unavailable, falls back to next (en)
+- **APK Size Optimization**: Only includes preferred languages, excluding unnecessary language packs
+- **Common Language Codes**:
+  - `zh-CN` - Simplified Chinese
+  - `zh-TW` - Traditional Chinese
+  - `en` - English
+  - `ja` - Japanese
+  - `ko` - Korean
+  - And many others following ISO 639-1 / BCP 47 standards
+
 ### Key Challenges
 - Correctly identifying which slices are mandatory vs optional
 - Properly merging manifests from multiple APKs
 - Maintaining valid APK signature after merging
 - Handling different APKM formats from various sources
+- Accurate density comparison and selection
+- Language code matching across different naming conventions
+
+## Example Configuration Workflow
+
+### Creating a Configuration
+
+1. **Create new configuration interactively**:
+   ```bash
+   python apkm_repackager.py --create-config my-xiaomi-tv
+   # Prompts for: architecture, max_density, languages, description
+   ```
+
+2. **Or create from template**:
+   ```json
+   # configs/my-xiaomi-tv.json
+   {
+     "name": "My Xiaomi Mi TV",
+     "architecture": "arm64-v8a",
+     "max_density": "xhdpi",
+     "languages": ["zh-CN", "en"],
+     "description": "Living room Xiaomi TV with 1080p display"
+   }
+   ```
+
+### Using the Configuration
+
+```bash
+# Convert APKM using saved configuration
+python apkm_repackager.py netflix.apkm -o netflix.apk --config my-xiaomi-tv
+
+# The tool will:
+# 1. Extract netflix.apkm
+# 2. Find all APK slices inside
+# 3. Select arm64-v8a architecture slice
+# 4. Select highest density ≤ xhdpi (e.g., if xxhdpi exists, use xhdpi instead)
+# 5. Select zh-CN language if available, otherwise en
+# 6. Merge selected slices + base APK
+# 7. Sign the merged APK
+# 8. Output to netflix.apk
+```
+
+### Configuration for Different Scenarios
+
+**High-end TV** (4K, powerful processor):
+```json
+{
+  "name": "Samsung 4K TV",
+  "architecture": "arm64-v8a",
+  "max_density": "xxxhdpi",
+  "languages": ["en"]
+}
+```
+
+**Older TV** (720p, lower specs):
+```json
+{
+  "name": "Old Android TV Box",
+  "architecture": "armeabi-v7a",
+  "max_density": "hdpi",
+  "languages": ["en", "zh-CN"]
+}
+```
+
+**Chinese Market TV** (prefer Chinese UI):
+```json
+{
+  "name": "Xiaomi TV China",
+  "architecture": "arm64-v8a",
+  "max_density": "xhdpi",
+  "languages": ["zh-CN", "zh-TW", "en"]
+}
+```
 
 ## Git Workflow
 
@@ -171,10 +342,13 @@ python apkm_repackager.py input.apkm -o output.apk --auto-detect
 ## Future Considerations
 
 - Platform support (Linux, macOS, Windows)
-- GUI vs CLI interface
-- Configuration file format
+- GUI interface (web-based or desktop)
+- Cloud configuration sharing (public repository of TV profiles)
+- Auto-detection from connected Android device via ADB
 - Logging and reporting capabilities
 - Performance optimization for large APKs
+- Support for XAPK format (similar to APKM)
+- Integration with package managers or app stores
 
 ## Resources
 
