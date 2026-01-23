@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-APKM-Repackager is a tool for converting APKM files (Android App Bundle split APKs) into single APK files that can be installed on Android-based TVs (like Xiaomi TVs).
+APKM-Repackager is a **macOS GUI application** for converting APKM files (Android App Bundle split APKs) into single APK files that can be installed on Android-based TVs (like Xiaomi TVs).
 
 ## Project Purpose
 
@@ -25,16 +25,23 @@ APKM-Repackager/
 ├── README.md              # Project documentation
 ├── CLAUDE.MD             # This file - Claude development guide
 ├── requirements.txt      # Python dependencies
-├── apkm_repackager.py   # Main script (planned)
-├── lib/                 # Helper modules (planned)
-│   ├── apkm_parser.py   # APKM extraction and parsing
-│   ├── apk_merger.py    # APK merging logic
-│   ├── signer.py        # APK signing utilities
+├── main.py               # Main application entry point (GUI)
+├── ui/                   # GUI components
+│   ├── main_window.py    # Main application window
+│   ├── config_dialog.py  # Configuration management dialog
+│   └── progress_dialog.py # Progress/status dialog
+├── lib/                  # Core logic modules
+│   ├── apkm_parser.py    # APKM extraction and parsing
+│   ├── apk_merger.py     # APK merging logic
+│   ├── signer.py         # APK signing utilities
 │   └── config_manager.py # Configuration management
-├── configs/             # Device configuration profiles
-│   ├── default.json     # Default configuration
-│   └── xiaomi-tv.json   # Example: Xiaomi TV profile
-└── .git/                # Git repository
+├── configs/              # Device configuration profiles
+│   ├── default.json      # Default configuration
+│   └── xiaomi-tv.json    # Example: Xiaomi TV profile
+├── resources/            # Application resources
+│   ├── icons/            # App icons
+│   └── images/           # UI images
+└── .git/                 # Git repository
 ```
 
 ## How It Works
@@ -48,6 +55,57 @@ The tool follows this workflow:
 5. **Merge APKs**: Combine selected slices into a single APK structure
 6. **Sign APK**: Sign the merged APK to make it installable
 7. **Output**: Produce a single APK file ready for installation on Android TV
+
+## macOS GUI Design
+
+### Main Window Layout
+The application features a clean, simple macOS-style interface:
+
+**Header Section:**
+- App icon and title "APKM Repackager"
+
+**Input Section:**
+- Large drag-and-drop area with dashed border
+- Text: "Drag APKM file here or click to browse"
+- Selected file path displays below
+
+**Configuration Section:**
+- Label: "Device Configuration"
+- Dropdown menu with saved configurations
+- Display panel showing current config details
+- Button: "Manage Configurations..."
+
+**Preview Section:**
+- Button: "Preview Selected Slices"
+- Expandable/collapsible panel showing slice breakdown
+
+**Action Section:**
+- Primary button: "Convert to APK"
+- Progress bar (hidden until conversion starts)
+- Status text (e.g., "Ready", "Converting...", "Complete!")
+
+### Menu Bar
+- **File**
+  - Open APKM... (Cmd+O)
+  - Batch Convert...
+  - Manage Configurations... (Cmd+,)
+  - Close Window (Cmd+W)
+  - Quit (Cmd+Q)
+- **Edit**
+  - (Standard macOS edit menu)
+- **Window**
+  - Minimize (Cmd+M)
+  - Zoom
+- **Help**
+  - APKM Repackager Help
+  - About
+
+### Design Principles
+- Native macOS look and feel (use system fonts, colors, spacing)
+- Minimize clicks: most common operation should take 3 clicks or less
+- Clear visual feedback for all actions
+- Non-blocking UI: long operations use progress indicators
+- Error messages in friendly, actionable language
 
 ## Configuration System
 
@@ -88,16 +146,22 @@ Each configuration profile contains:
 
 ## Technology Stack
 
-Technologies for APKM processing:
-- **Python** - Main scripting language for automation and logic
-- **ZIP/Unzip utilities** - APKM files are essentially ZIP archives
-- **APK Parser libraries** - To read AndroidManifest.xml and analyze APK contents
-- **APK signing tools** - For signing the merged APK (apksigner from Android SDK)
-- **Android SDK Build Tools** - For various APK operations
-- Possible libraries:
-  - `zipfile` (Python built-in) for APKM extraction
-  - `androguard` or similar for APK analysis
-  - `apksigner` for signing
+### GUI Framework (macOS)
+- **PyQt6** or **PySide6** - Modern Qt-based GUI framework with native macOS look and feel
+  - Alternative: **tkinter** - Built-in Python GUI (simpler but less native-looking)
+  - Alternative: **rumps** - For macOS menu bar app (if minimal UI desired)
+- **py2app** - For packaging Python app as macOS `.app` bundle
+
+### Core Technologies
+- **Python 3.9+** - Main programming language
+- **zipfile** (Python built-in) - For APKM extraction (ZIP archives)
+- **androguard** or **pyaxmlparser** - For parsing AndroidManifest.xml from APK files
+- **apksigner** (Android SDK Build Tools) - For signing merged APK
+- **Java/JDK** - Required by Android SDK tools
+
+### Development Tools
+- **macOS 10.14+** - Target platform
+- **Xcode Command Line Tools** - For macOS development
 
 ## Development Guidelines
 
@@ -152,26 +216,38 @@ Technologies for APKM processing:
 - [ ] Prioritized language selection (e.g., zh-CN preferred, fallback to en)
 - [ ] Include only preferred languages to reduce APK size
 
-### Interface & Usability
-- [ ] CLI interface for easy usage
-- [ ] List available slices in APKM
-- [ ] Dry-run mode to preview selected slices
-- [ ] Verbose output for debugging
-- [ ] Batch processing support
+### Interface & Usability (macOS GUI)
+- [ ] Drag-and-drop APKM file support
+- [ ] Visual configuration selector (dropdown for saved configs)
+- [ ] Interactive slice preview (show what will be included)
+- [ ] Real-time progress bar during conversion
+- [ ] Configuration manager UI (create, edit, delete profiles)
+- [ ] File picker for input/output
+- [ ] Visual feedback and error messages
+- [ ] Batch processing with queue management
+- [ ] macOS native look and feel
+- [ ] Menu bar integration
+- [ ] Keyboard shortcuts (Cmd+O for open, etc.)
 
 ## Dependencies
 
-Required dependencies:
-- **Python 3.7+** - Main runtime environment
+### System Requirements
+- **macOS 10.14+** - Target operating system
+- **Python 3.9+** - Main runtime environment
 - **Android SDK Build Tools** - For apksigner and other tools
 - **Java/JDK** - Required by Android SDK tools
+- **Xcode Command Line Tools** - For building macOS app
 
-Python packages (to be added to requirements.txt):
+### Python Packages (requirements.txt)
+**GUI Framework:**
+- `PyQt6` or `PySide6` - Qt-based GUI framework for macOS
+- `py2app` - For creating standalone macOS application bundle
+
+**Core Functionality:**
 - `androguard` or `pyaxmlparser` - For parsing AndroidManifest.xml from APK files
-- Standard library modules: `zipfile`, `argparse`, `pathlib`, `json`, `shutil`
+- Standard library modules: `zipfile`, `pathlib`, `json`, `shutil`
 
-Optional:
-- `pyyaml` - If YAML configuration format is preferred over JSON
+**Optional:**
 - `apktool` - For deeper APK analysis if needed
 
 ## Usage Patterns
@@ -179,44 +255,65 @@ Optional:
 ### For Claude
 
 When working on this project:
-1. Validate configuration files for correct format and valid values
-2. Check file paths and permissions before operations
-3. Test with various APKM files and different configurations
-4. Ensure density hierarchy is correctly implemented
-5. Verify language preference ordering works as expected
-6. Test edge cases (missing slices, unavailable languages, etc.)
-7. Document any new features or modifications
-8. Update this CLAUDE.MD file as the project evolves
+1. **GUI Development**: Focus on native macOS look and feel using PyQt6/PySide6
+2. **Configuration Validation**: Validate configuration files for correct format and valid values
+3. **File Operations**: Check file paths and permissions before operations; use macOS file dialogs
+4. **Testing**: Test with various APKM files and different configurations
+5. **Density Logic**: Ensure density hierarchy is correctly implemented
+6. **Language Logic**: Verify language preference ordering works as expected
+7. **Error Handling**: Test edge cases (missing slices, unavailable languages, corrupted files, etc.)
+8. **UI Responsiveness**: Keep UI responsive during long operations (use threading/async)
+9. **macOS Guidelines**: Follow Apple Human Interface Guidelines for macOS apps
+10. **Documentation**: Document any new features or modifications
+11. **Updates**: Update this CLAUDE.MD file as the project evolves
 
-### Command Patterns
+### macOS-Specific Considerations
+- Use native file dialogs (`QFileDialog` with native mode)
+- Support drag-and-drop for APKM files
+- Handle macOS file permissions and app sandboxing
+- Support dark mode (system appearance)
+- Use macOS keyboard shortcuts (Cmd instead of Ctrl)
+- Package as `.app` bundle using `py2app`
+- Consider code signing for distribution
 
-Expected usage patterns:
-```bash
-# Using saved configuration (recommended)
-python apkm_repackager.py input.apkm -o output.apk --config xiaomi-tv
+### GUI Workflow
 
-# Using default configuration
-python apkm_repackager.py input.apkm -o output.apk
+Expected user workflow in the macOS app:
 
-# Manual parameters (without configuration)
-python apkm_repackager.py input.apkm -o output.apk --arch arm64-v8a --max-density xhdpi --languages zh-CN,en
+**Main Window:**
+1. **Select APKM File**
+   - Drag and drop APKM file onto window, OR
+   - Click "Select APKM" button to open file picker
+   - File path displays in the UI
 
-# List available slices in APKM
-python apkm_repackager.py input.apkm --list
+2. **Choose Configuration**
+   - Dropdown menu shows saved device configurations
+   - Select desired configuration (e.g., "Xiaomi Mi TV 4S")
+   - Configuration details display below (arch, density, languages)
 
-# Dry run to preview selected slices (before actual conversion)
-python apkm_repackager.py input.apkm --config xiaomi-tv --dry-run
+3. **Preview Slices** (Optional)
+   - Click "Preview" button to see which slices will be included
+   - Shows: base APK, selected architecture, density, languages
+   - Estimated output APK size
 
-# Configuration management commands
-python apkm_repackager.py --create-config xiaomi-tv
-python apkm_repackager.py --list-configs
-python apkm_repackager.py --show-config xiaomi-tv
-python apkm_repackager.py --delete-config xiaomi-tv
-python apkm_repackager.py --set-default xiaomi-tv
+4. **Convert**
+   - Click "Convert" button
+   - Progress bar shows conversion status
+   - Notification when complete
+   - Converted APK saved to selected location
 
-# Batch processing with same configuration
-python apkm_repackager.py *.apkm --config xiaomi-tv --batch
-```
+**Configuration Manager:**
+- Access via menu: `File > Manage Configurations`
+- Visual list of saved configurations
+- Buttons: New, Edit, Delete, Duplicate
+- Form to create/edit: Name, Architecture dropdown, Max Density dropdown, Language checkboxes
+
+**Batch Processing:**
+- Access via menu: `File > Batch Convert`
+- Select multiple APKM files
+- Choose configuration
+- Queue shows all files with progress
+- Convert all at once
 
 ## Important Notes
 
@@ -261,44 +358,62 @@ python apkm_repackager.py *.apkm --config xiaomi-tv --batch
 - Accurate density comparison and selection
 - Language code matching across different naming conventions
 
-## Example Configuration Workflow
+## Example GUI Workflow
 
 ### Creating a Configuration
 
-1. **Create new configuration interactively**:
-   ```bash
-   python apkm_repackager.py --create-config my-xiaomi-tv
-   # Prompts for: architecture, max_density, languages, description
-   ```
+1. **Open Configuration Manager**:
+   - Click menu: `File > Manage Configurations`
+   - Click "New Configuration" button
 
-2. **Or create from template**:
-   ```json
-   # configs/my-xiaomi-tv.json
-   {
-     "name": "My Xiaomi Mi TV",
-     "architecture": "arm64-v8a",
-     "max_density": "xhdpi",
-     "languages": ["zh-CN", "en"],
-     "description": "Living room Xiaomi TV with 1080p display"
-   }
-   ```
+2. **Fill in Configuration Form**:
+   - **Name**: "My Xiaomi Mi TV"
+   - **Architecture**: Select "arm64-v8a" from dropdown
+   - **Max Density**: Select "xhdpi" from dropdown
+   - **Languages**: Check boxes for "Simplified Chinese (zh-CN)" and "English (en)"
+   - **Description**: "Living room Xiaomi TV with 1080p display"
+   - Click "Save"
 
-### Using the Configuration
+3. **Configuration is now saved** to `configs/my-xiaomi-tv.json`
 
-```bash
-# Convert APKM using saved configuration
-python apkm_repackager.py netflix.apkm -o netflix.apk --config my-xiaomi-tv
+### Converting APKM with GUI
 
-# The tool will:
-# 1. Extract netflix.apkm
-# 2. Find all APK slices inside
-# 3. Select arm64-v8a architecture slice
-# 4. Select highest density ≤ xhdpi (e.g., if xxhdpi exists, use xhdpi instead)
-# 5. Select zh-CN language if available, otherwise en
-# 6. Merge selected slices + base APK
-# 7. Sign the merged APK
-# 8. Output to netflix.apk
-```
+1. **Launch the app** (double-click APKM Repackager.app)
+
+2. **Load APKM file**:
+   - Drag `netflix.apkm` onto the main window, OR
+   - Click "Select APKM" and choose `netflix.apkm`
+
+3. **Select Configuration**:
+   - Click configuration dropdown
+   - Select "My Xiaomi Mi TV" from list
+   - UI shows: Architecture: arm64-v8a, Max Density: xhdpi, Languages: zh-CN, en
+
+4. **Preview** (optional):
+   - Click "Preview Slices" button
+   - Dialog shows which slices will be included:
+     - ✓ base.apk
+     - ✓ split_config.arm64_v8a.apk
+     - ✓ split_config.xhdpi.apk
+     - ✓ split_config.zh.apk
+     - ✓ split_config.en.apk
+   - Shows estimated output size
+
+5. **Convert**:
+   - Click "Convert" button
+   - Choose save location for output APK
+   - Progress bar shows: "Extracting APKM... Merging slices... Signing APK..."
+   - Success notification: "Netflix.apk created successfully!"
+
+**The app automatically**:
+- Extracts netflix.apkm
+- Finds all APK slices inside
+- Selects arm64-v8a architecture slice
+- Selects highest density ≤ xhdpi
+- Selects zh-CN language if available, otherwise en
+- Merges selected slices + base APK
+- Signs the merged APK
+- Saves to chosen location
 
 ### Configuration for Different Scenarios
 
@@ -341,14 +456,31 @@ python apkm_repackager.py netflix.apkm -o netflix.apk --config my-xiaomi-tv
 
 ## Future Considerations
 
-- Platform support (Linux, macOS, Windows)
-- GUI interface (web-based or desktop)
-- Cloud configuration sharing (public repository of TV profiles)
+### Application Features
 - Auto-detection from connected Android device via ADB
-- Logging and reporting capabilities
-- Performance optimization for large APKs
+- Cloud configuration sharing (public repository of TV profiles)
 - Support for XAPK format (similar to APKM)
-- Integration with package managers or app stores
+- Dark mode support for macOS
+- Preferences/Settings panel
+- Recent files menu
+- Automatic updates mechanism
+
+### Technical Improvements
+- Performance optimization for large APKs
+- Logging and error reporting
+- Crash reporting and diagnostics
+- Code signing and notarization for macOS distribution
+- Multi-threaded conversion for better performance
+
+### Distribution
+- macOS App Store distribution (requires Apple Developer account)
+- Direct download DMG distribution
+- Homebrew cask formula
+- Auto-updater (Sparkle framework)
+
+### Platform Expansion
+- Windows version (if demand exists)
+- Linux version (if demand exists)
 
 ## Resources
 
