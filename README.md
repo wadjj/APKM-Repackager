@@ -75,13 +75,41 @@ Each configuration includes:
 
 ## Building macOS App
 
-To create a standalone macOS application:
+### 快速构建
+
+使用提供的构建脚本（推荐）：
 
 ```bash
-python3 setup.py py2app
+./build_app.sh
 ```
 
-The app will be created in the `dist/` directory.
+脚本会自动安装依赖、清理旧构建并创建 .app 文件。
+
+### 手动构建
+
+```bash
+# 1. 安装依赖
+pip3 install -r requirements.txt
+
+# 2. 构建应用
+python3 setup.py py2app
+
+# 3. 运行应用
+open "dist/APKM Repackager.app"
+```
+
+构建完成后，应用位于 `dist/APKM Repackager.app`
+
+### 创建 DMG 安装包
+
+```bash
+hdiutil create -volname "APKM Repackager" \
+    -srcfolder "dist/APKM Repackager.app" \
+    -ov -format UDZO \
+    APKM-Repackager.dmg
+```
+
+📖 **详细构建说明请查看 [BUILD.md](BUILD.md)**
 
 ## Configuration Examples
 
