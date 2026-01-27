@@ -1,0 +1,7 @@
+{
+  "name": "Default Android TV",
+  "architecture": "arm64-v8a",
+  "max_density": "xhdpi",
+  "languages": ["en"],
+  "description": "Default configuration for most modern Android TVs with ARM64 processor"
+}
