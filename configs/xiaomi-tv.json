@@ -1,0 +1,7 @@
+{
+  "name": "Xiaomi Mi TV",
+  "architecture": "arm64-v8a",
+  "max_density": "xhdpi",
+  "languages": ["zh-CN", "en"],
+  "description": "Configuration for Xiaomi Mi TV with Simplified Chinese and English support"
+}

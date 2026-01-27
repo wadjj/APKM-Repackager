@@ -1,0 +1,15 @@
+# GUI Framework
+PyQt6>=6.6.0
+
+# APK Analysis
+pyaxmlparser>=0.3.28
+
+# macOS App Packaging
+py2app>=0.28.0
+
+# Standard library dependencies (included with Python 3.9+)
+# - zipfile
+# - pathlib
+# - json
+# - shutil
+# - threading
